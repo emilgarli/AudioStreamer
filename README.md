@@ -4,7 +4,7 @@ The server AudioNode will then receive the audio data, and play it as it is bein
 
 The server is supposed to be able to receive several audio files of instruments of the same song at the same time, and sync the streams so that a finished song is playing. This has not yet been implemented.
 
-#Dependencies
+# Dependencies
 
 Boost
 PortAudio
