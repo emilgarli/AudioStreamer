@@ -1,0 +1,7 @@
+*.log
+/AudioNode
+/AudioRecorder
+/AudioRecorderConsole
+/AudioStreamerGui
+/x64
+/.vs
