@@ -21,9 +21,6 @@
     <ClCompile Include="AudioNodeServer.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="SafeQueue.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="AudioNodeServer.h">

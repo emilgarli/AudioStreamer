@@ -21,7 +21,6 @@
   <ItemGroup>
     <ClCompile Include="AudioNodeServer.cpp" />
     <ClCompile Include="Main.cpp" />
-    <ClCompile Include="SafeQueue.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="AudioNodeServer.h" />

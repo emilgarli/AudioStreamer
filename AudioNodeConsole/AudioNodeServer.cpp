@@ -102,9 +102,12 @@ void AudioNodeServer::audioReaderThread(std::shared_ptr<boost::asio::ip::tcp::so
                 std::cerr << "Socket read error: " << error.message() << std::endl;
                 break;
             }
-
+            //Lock the shared buffer
             std::lock_guard<std::mutex> lock(bufferMutex);
+            //Write to the shared buffer
             buffer.insert(buffer.end(), tempBuffer, tempBuffer + len);
+            //And finally, notify the waiting playback thread that the buffer is open for reading
+            writeError("Unlocking mutex");
             bufferCv.notify_one();
         }
     }
@@ -160,6 +163,16 @@ void AudioNodeServer::handleClient(bool is_source) {
     Pa_StopStream(stream);
     Pa_CloseStream(stream);
     Pa_Terminate();
+}
+
+static void writeError(std::string errormsg) {
+    FILE* fptr = fopen("NodeErrorLog.txt", "wb");
+    if (fptr == NULL)
+        return;
+    else
+        std::remove("NodeErrorLog.txt");
+    size_t written = fwrite(errormsg.c_str(),sizeof(errormsg), strlen(errormsg.c_str()), fptr);
+    fclose(fptr);
 }
 
 void AudioNodeServer::run() {
