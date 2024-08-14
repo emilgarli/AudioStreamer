@@ -14,7 +14,7 @@ private:
     void handleAccept(const boost::system::error_code& error);
     void handleClient(bool is_source);
     void audioReaderThread(std::shared_ptr<boost::asio::ip::tcp::socket> socket, std::vector<char>& buffer, std::mutex& bufferMutex, std::condition_variable& bufferCv);
-
+    ~AudioNodeServer();
     boost::asio::io_context io_context_;
     boost::asio::ip::tcp::acceptor acceptor_;
     boost::asio::ip::tcp::socket socket_;

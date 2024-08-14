@@ -17,6 +17,10 @@ AudioNodeServer::AudioNodeServer(short port)
     startAccept();
 }
 
+AudioNodeServer::~AudioNodeServer() {
+
+}
+
 void AudioNodeServer::startAccept() {
     acceptor_.async_accept(socket_, [this](const boost::system::error_code& error) {
         handleAccept(error);
@@ -75,6 +79,7 @@ static int paCallback(const void* inputBuffer, void* outputBuffer,
     }
 
     if (!audioData->buffer->empty()) {
+        std::cout << "Debug 2" << std::endl;
         size_t bytesToCopy = std::min(audioData->buffer->size(), framesPerBuffer * 2 * sizeof(short));
         std::copy(audioData->buffer->begin(), audioData->buffer->begin() + bytesToCopy, reinterpret_cast<char*>(out));
         audioData->buffer->erase(audioData->buffer->begin(), audioData->buffer->begin() + bytesToCopy);
@@ -83,7 +88,7 @@ static int paCallback(const void* inputBuffer, void* outputBuffer,
             std::fill(out + bytesToCopy / sizeof(short), out + framesPerBuffer * 2, 0); // Fill remaining with silence
         }
     }
-
+    std::cout << "Debug 3" << std::endl;
     return paContinue;
 }
 //This thread method is responsible for reading the incomming socket data from the source
@@ -107,12 +112,12 @@ void AudioNodeServer::audioReaderThread(std::shared_ptr<boost::asio::ip::tcp::so
             //Write to the shared buffer
             buffer.insert(buffer.end(), tempBuffer, tempBuffer + len);
             //And finally, notify the waiting playback thread that the buffer is open for reading
-            writeError("Unlocking mutex");
+            std::cout << "Debug 1" << std::endl;
             bufferCv.notify_one();
         }
     }
     catch (std::exception& e) {
-        std::cerr << "Exception in audioReaderThread: " << e.what() << std::endl;
+        std::cout << "Exception in audioReaderThread: " << e.what() << std::endl;
     }
 }
 
@@ -145,6 +150,7 @@ void AudioNodeServer::handleClient(bool is_source) {
         return;
     }
     //Here we start the music stream
+    std::cout << "Starting audio playback." << std::endl;
     err = Pa_StartStream(stream);
     if (err != paNoError) {
         std::cerr << "PortAudio error: " << Pa_GetErrorText(err) << std::endl;
@@ -158,21 +164,10 @@ void AudioNodeServer::handleClient(bool is_source) {
     readerThread.detach();
     while (true)
         Sleep(2);
-    Pa_Sleep(1000); // Run for a while to demonstrate
 
     Pa_StopStream(stream);
     Pa_CloseStream(stream);
     Pa_Terminate();
-}
-
-static void writeError(std::string errormsg) {
-    FILE* fptr = fopen("NodeErrorLog.txt", "wb");
-    if (fptr == NULL)
-        return;
-    else
-        std::remove("NodeErrorLog.txt");
-    size_t written = fwrite(errormsg.c_str(),sizeof(errormsg), strlen(errormsg.c_str()), fptr);
-    fclose(fptr);
 }
 
 void AudioNodeServer::run() {
