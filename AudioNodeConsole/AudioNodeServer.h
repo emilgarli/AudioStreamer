@@ -1,26 +1,24 @@
-#include <boost/asio.hpp>
+#pragma once
 #include <vector>
 #include <thread>
 #include <mutex>
+#include "Rawsocket.h"
 #include <condition_variable>
 
 class AudioNodeServer {
 public:
-    AudioNodeServer(short port);
-    void run();
-
+    AudioNodeServer(std::shared_ptr<CWizReadWriteSocket> sock);
+    static int InitializeConnection(std::shared_ptr<CWizReadWriteSocket> socket, AudioNodeServer* server);
+    void setSocket(std::shared_ptr<CWizReadWriteSocket> sock);
 private:
-    void startAccept();
-    void handleAccept(const boost::system::error_code& error);
-    void handleClient(bool is_source);
-    void audioReaderThread(std::shared_ptr<boost::asio::ip::tcp::socket> socket, std::vector<char>& buffer, std::mutex& bufferMutex, std::condition_variable& bufferCv);
-    ~AudioNodeServer();
-    boost::asio::io_context io_context_;
-    boost::asio::ip::tcp::acceptor acceptor_;
-    boost::asio::ip::tcp::socket socket_;
+    static void audioReader(std::vector<char>& buffer, std::mutex& bufferMutex, std::condition_variable& bufferCv, AudioNodeServer* server);
+    static void handleClient(AudioNodeServer* server);
+    //void audioReader(std::vector<char>& buffer, std::mutex& bufferMutex, std::condition_variable& bufferCv);
+    //~AudioNodeServer();
 
-    std::vector<std::shared_ptr<boost::asio::ip::tcp::socket>> sources_;
-    std::vector<std::shared_ptr<boost::asio::ip::tcp::socket>> receivers_;
+    std::shared_ptr<CWizReadWriteSocket> socket = nullptr;
+    std::vector<std::shared_ptr<CWizReadWriteSocket>> sources_;
+    std::vector<std::shared_ptr<CWizReadWriteSocket>> receivers_;
     std::mutex clients_mutex_;
     int numClients = 0;
     bool is_running = false;

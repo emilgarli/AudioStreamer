@@ -1,11 +1,17 @@
+#include <Rawsocket.h>
+#include <afxwin.h>
 #include <iostream>
 #include <portaudio.h>
 #include <sndfile.h>
 #include <vector>
-#include <memory>
 #include <thread>
-#include "client.h"
 
+CWizReadWriteSocket* cSocket = NULL;
+struct AudioData {
+    SNDFILE* file;
+    SF_INFO sfinfo;
+    sf_count_t framesLeft;
+};
 // Callback function called by PortAudio to fill the output buffer
 static int playCallback(const void* inputBuffer, void* outputBuffer,
     unsigned long framesPerBuffer,
@@ -23,39 +29,31 @@ static int playCallback(const void* inputBuffer, void* outputBuffer,
         return paComplete;
     }
 
+    // Determine how many frames to read
     sf_count_t framesToRead = framesPerBuffer;
     if (audioData->framesLeft < framesPerBuffer) {
         framesToRead = audioData->framesLeft;
     }
-
+    // Read audio data directly into the output buffer
     sf_count_t framesRead = sf_readf_short(audioData->file, out, framesToRead);
     audioData->framesLeft -= framesRead;
 
-       
-    
-    if (audioData->socket && audioData->socket->is_open()) {
-        boost::asio::async_write(*audioData->socket,
-            boost::asio::buffer(out, framesRead * audioData->sfinfo.channels * sizeof(short)),
-            [](const boost::system::error_code& ec, std::size_t) {
-                if (ec) {
-                    std::cerr << "Write error: " << ec.message() << std::endl;
-                }
-            });
-    }
-  
-    memset(out, 0, framesPerBuffer * audioData->sfinfo.channels * sizeof(short));
-
-    // If we read less than requested, zero out the remaining buffer
+    // Send the exact audio data being played over the socket
+    cSocket->Write(out, framesRead * audioData->sfinfo.channels * sizeof(short));
+    // If less data was read than requested, zero out the remaining part of the output buffer
     if (framesRead < framesPerBuffer) {
         memset(out + framesRead * audioData->sfinfo.channels, 0,
             (framesPerBuffer - framesRead) * audioData->sfinfo.channels * sizeof(short));
     }
-
-    return paContinue;
+    memset(out, 0, framesPerBuffer * audioData->sfinfo.channels * sizeof(short));
+    return (audioData->framesLeft > 0) ? paContinue : paComplete;
 }
 
+
+
 int startPlayback(const char* filePath) {
-    
+    LPCTSTR ipAddress = "127.0.0.1";
+    bool Connected = false;
     SF_INFO sfinfo;
     SNDFILE* file = sf_open(filePath, SFM_READ, &sfinfo);
     if (!file) {
@@ -67,14 +65,30 @@ int startPlayback(const char* filePath) {
     audioData->file = file;
     audioData->sfinfo = sfinfo;
     audioData->framesLeft = sfinfo.frames;
+    WSADATA wsaData;
+    int iResult;
 
-    boost::asio::io_context io_context;
-    Client client(io_context, "127.0.0.1", "17598", audioData);
-
-    std::thread io_thread([&io_context]() {
-        io_context.run();
-        });
-
+    // Initialize Winsock
+    iResult = WSAStartup(MAKEWORD(2, 2), &wsaData);
+    if (iResult != 0) {
+        printf("WSAStartup failed: %d\n", iResult);
+        return 1;
+    }
+    cSocket = new CWizReadWriteSocket();
+    while (!Connected) {
+        Connected = cSocket->Connect(ipAddress, 17598);
+        if (!Connected){
+            std::cout << "Unable to find server at port 17598. Retrying..." << std::endl;
+        }
+    }
+    if (WSAGetLastError() != 0)
+        std::cerr << "Listen failed: " << GetLastSocketErrorText() << std::endl;
+    int written = 0;
+    while (written < 1) {
+        written = cSocket->Write("c", 1);
+        if (written < 0)
+            std::cout << "Error writing to server" << std::endl;
+    }
     PaError err = Pa_Initialize();
     if (err != paNoError) {
         std::cerr << "PortAudio error: " << Pa_GetErrorText(err) << "\n";
@@ -114,8 +128,7 @@ int startPlayback(const char* filePath) {
 
     Pa_Terminate();
     sf_close(file);
-
-    io_thread.join();
+    return 0;
 }
 
 int main() {
