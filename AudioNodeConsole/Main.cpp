@@ -38,7 +38,7 @@ void doListenThread() {
 		if (WSAGetLastError() != 0)
 			std::cerr << "Listen failed: " << GetLastSocketErrorText() << std::endl;
 		std::cout << "Incomming connection accepted! Starting coms thread" << std::endl;
-		std::thread comThread(AudioNodeServer::InitializeConnection, socket, server);
+		std::thread comThread(&AudioNodeServer::InitializeConnection, server, socket);
 		comThread.detach();
 	}
 }

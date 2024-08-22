@@ -8,12 +8,12 @@
 class AudioNodeServer {
 public:
     AudioNodeServer(std::shared_ptr<CWizReadWriteSocket> sock);
-    static int InitializeConnection(std::shared_ptr<CWizReadWriteSocket> socket, AudioNodeServer* server);
+    int InitializeConnection(std::shared_ptr<CWizReadWriteSocket> socket);
     void setSocket(std::shared_ptr<CWizReadWriteSocket> sock);
 private:
-    static void audioReader(std::vector<char>& buffer, std::mutex& bufferMutex, std::condition_variable& bufferCv, AudioNodeServer* server);
-    static void handleClient(AudioNodeServer* server);
-    //void audioReader(std::vector<char>& buffer, std::mutex& bufferMutex, std::condition_variable& bufferCv);
+    void audioReader(std::vector<char>& buffer, std::mutex& bufferMutex, std::condition_variable& bufferCv);
+    void handleClient();
+    
     //~AudioNodeServer();
 
     std::shared_ptr<CWizReadWriteSocket> socket = nullptr;

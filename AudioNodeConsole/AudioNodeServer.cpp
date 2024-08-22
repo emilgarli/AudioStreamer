@@ -14,7 +14,7 @@ AudioNodeServer::AudioNodeServer(std::shared_ptr<CWizReadWriteSocket> sock){
     socket = sock;
 }
 
-int AudioNodeServer::InitializeConnection(std::shared_ptr<CWizReadWriteSocket> socket, AudioNodeServer* server) {
+int AudioNodeServer::InitializeConnection(std::shared_ptr<CWizReadWriteSocket> socket) {
     char readBuf[10] = {};
     int iRead = 0;
     iRead = socket->Read(readBuf, sizeof(readBuf));
@@ -25,14 +25,14 @@ int AudioNodeServer::InitializeConnection(std::shared_ptr<CWizReadWriteSocket> s
         return -1;
     }
 
-    //std::lock_guard<std::mutex> lock(clients_mutex_);
+    std::lock_guard<std::mutex> lock(clients_mutex_);
 
     if (readBuf[0] == 'c') {
-        //sources_.push_back(socket);
+        sources_.push_back(socket);
         std::cout << "Audio source connected." << std::endl;
     }
     else if (readBuf[0] == 'r') {
-        //receivers_.push_back(socket);
+        receivers_.push_back(socket);
         std::cout << "Audio receiver connected." << std::endl;
     }
     else {
@@ -40,8 +40,8 @@ int AudioNodeServer::InitializeConnection(std::shared_ptr<CWizReadWriteSocket> s
         return -1;
     }
 
-    server->setSocket(socket);
-    server->handleClient(server);
+    setSocket(socket);
+    handleClient();
     return 0;
 }
 
@@ -85,14 +85,13 @@ static int paCallback(const void* inputBuffer, void* outputBuffer,
 //and putting it in buffer that is shared with the playback function
 void AudioNodeServer::audioReader(std::vector<char>& buffer,
                                   std::mutex& bufferMutex, 
-                                  std::condition_variable& bufferCv,
-                                  AudioNodeServer* server)
+                                  std::condition_variable& bufferCv)
 {
     try {
         char tempBuffer[2048] = {};
         int iRead = 0;
         while (true) {
-            iRead = server->socket->Read(tempBuffer,sizeof(tempBuffer));
+            iRead = socket->Read(tempBuffer, sizeof(tempBuffer));
             if (iRead <= 0) {
                 std::cout << "Error reading socket data: " << GetLastSocketErrorText()  << std::endl;
                 break;
@@ -110,12 +109,12 @@ void AudioNodeServer::audioReader(std::vector<char>& buffer,
     }
 }
 
-void AudioNodeServer::handleClient(AudioNodeServer* server) {
+void AudioNodeServer::handleClient() {
     PaStream* stream;
     AudioData audioData;
-    audioData.buffer = &server->audioBuffer_;
-    audioData.bufferMutex = &server->bufferMutex_;
-    audioData.bufferCv = &server->bufferCv_;
+    audioData.buffer = &audioBuffer_;
+    audioData.bufferMutex = &bufferMutex_;
+    audioData.bufferCv = &bufferCv_;
 
     PaError err = Pa_Initialize();
     if (err != paNoError) {
@@ -150,13 +149,17 @@ void AudioNodeServer::handleClient(AudioNodeServer* server) {
     
     //And here we start the thread that will fill the stream with 
     //music data.
-    std::thread readerThread(AudioNodeServer::audioReader,
-                            std::ref(server->audioBuffer_),
-                            std::ref(server->bufferMutex_),
-                            std::ref(server->bufferCv_),
-                            server);
+    std::thread readerThread(&AudioNodeServer::audioReader,
+                            this,
+                            std::ref(audioBuffer_),
+                            std::ref(bufferMutex_),
+                            std::ref(bufferCv_));
     readerThread.join();
-    
+    // This will make sure the stream runs until the end of the buffer.
+    while (true) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    }
+    std::cout << "Done playing. Exiting... " << std::endl;
     Pa_StopStream(stream);
     Pa_CloseStream(stream);
     Pa_Terminate();
