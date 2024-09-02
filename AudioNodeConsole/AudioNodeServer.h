@@ -4,13 +4,21 @@
 #include <mutex>
 #include "Rawsocket.h"
 #include <condition_variable>
+#include <portaudio.h>
 
 class AudioNodeServer {
 public:
     AudioNodeServer(std::shared_ptr<CWizReadWriteSocket> sock);
     int InitializeConnection(std::shared_ptr<CWizReadWriteSocket> socket);
     void setSocket(std::shared_ptr<CWizReadWriteSocket> sock);
+    static int paCallback(const void* inputBuffer,
+        void* outputBuffer,
+        unsigned long framesPerBuffer,
+        const PaStreamCallbackTimeInfo* timeInfo,
+        PaStreamCallbackFlags statusFlags,
+        void* userData);
 private:
+    
     void audioReader(std::vector<char>& buffer, std::mutex& bufferMutex, std::condition_variable& bufferCv);
     void handleClient();
     

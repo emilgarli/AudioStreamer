@@ -50,19 +50,11 @@ void AudioNodeServer::setSocket(std::shared_ptr<CWizReadWriteSocket> sock)
     socket = sock;
 }
 
-
-/*
-AudioNodeServer::~AudioNodeServer() {
-
-}
-*/
-static int paCallback(const void* inputBuffer, void* outputBuffer,
-    unsigned long framesPerBuffer,
-    const PaStreamCallbackTimeInfo* timeInfo,
-    PaStreamCallbackFlags statusFlags,
-    void* userData) {
+int AudioNodeServer::paCallback(const void* inputBuffer, void* outputBuffer, unsigned long framesPerBuffer, const PaStreamCallbackTimeInfo* timeInfo, PaStreamCallbackFlags statusFlags, void* userData)
+{
     AudioData* audioData = static_cast<AudioData*>(userData);
     short* out = static_cast<short*>(outputBuffer);
+
 
     std::unique_lock<std::mutex> lock(*audioData->bufferMutex);
     if (audioData->buffer->empty()) {
@@ -81,6 +73,13 @@ static int paCallback(const void* inputBuffer, void* outputBuffer,
     }
     return paContinue;
 }
+
+/*
+AudioNodeServer::~AudioNodeServer() {
+
+}
+*/
+
 //This thread method is responsible for reading the incomming socket data from the source
 //and putting it in buffer that is shared with the playback function
 void AudioNodeServer::audioReader(std::vector<char>& buffer,
