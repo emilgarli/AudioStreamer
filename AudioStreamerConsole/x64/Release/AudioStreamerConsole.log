@@ -1,6 +1,20 @@
-﻿LINK : warning LNK4098: defaultlib 'MSVCRTD' conflicts with use of other libs; use /NODEFAULTLIB:library
+﻿  AudioStreamer.cpp
+D:\Source\repos\libs\Rawsocket\Rawsocket.h(18,9): warning C4005: 'INVALID_SOCKET': macro redefinition
+D:\Source\repos\libs\Rawsocket\Rawsocket.h(19,9): warning C4005: 'SOCKET_ERROR': macro redefinition
+D:\Source\repos\libs\Rawsocket\Rawsocket.h(27,9): warning C4005: 'WSAEINTR': macro redefinition
+D:\Source\repos\libs\Rawsocket\Rawsocket.h(28,9): warning C4005: 'WSAEBADF': macro redefinition
+D:\Source\repos\libs\Rawsocket\Rawsocket.h(29,9): warning C4005: 'WSAEACCES': macro redefinition
+D:\Source\repos\libs\Rawsocket\Rawsocket.h(30,9): warning C4005: 'WSAEFAULT': macro redefinition
+D:\Source\repos\libs\Rawsocket\Rawsocket.h(31,9): warning C4005: 'WSAEINVAL': macro redefinition
+D:\Source\repos\libs\Rawsocket\Rawsocket.h(32,9): warning C4005: 'WSAEMFILE': macro redefinition
+D:\Source\repos\libs\Rawsocket\Rawsocket.h(33,9): warning C4005: 'WSAEWOULDBLOCK': macro redefinition
+D:\Source\repos\libs\Rawsocket\Rawsocket.h(34,9): warning C4005: 'WSAEINPROGRESS': macro redefinition
+D:\Source\repos\libs\Rawsocket\Rawsocket.h(35,9): warning C4005: 'WSAEALREADY': macro redefinition
+D:\Source\repos\libs\Rawsocket\Rawsocket.h(36,9): warning C4005: 'WSAENOTSOCK': macro redefinition
+D:\Source\repos\AudioSystem\AudioStreamerConsole\AudioStreamer.cpp(42,69): warning C4267: 'argument': conversion from 'size_t' to 'int', possible loss of data
+LINK : warning LNK4098: defaultlib 'MSVCRTD' conflicts with use of other libs; use /NODEFAULTLIB:library
   Generating code
-  1 of 257 functions ( 0.4%) were compiled, the rest were copied from previous compilation.
+  2 of 292 functions ( 0.7%) were compiled, the rest were copied from previous compilation.
     0 functions were new in current compilation
     1 functions had inline decision re-evaluated but remain unchanged
   Finished generating code

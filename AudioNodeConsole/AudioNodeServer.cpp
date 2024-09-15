@@ -3,6 +3,10 @@
 #include <iostream>
 #include <vector>
 
+static int numClients = 0;
+static int iter = 0;
+static int socketiter = 0;
+
 struct AudioData {
     std::vector<char>* buffer;
     std::mutex* bufferMutex;
@@ -10,7 +14,7 @@ struct AudioData {
 };
 
 //Constructor. Param: A connected socket
-AudioNodeServer::AudioNodeServer(std::shared_ptr<CWizReadWriteSocket> sock){
+AudioNodeServer::AudioNodeServer(std::shared_ptr<CWizReadWriteSocket> sock) {
     socket = sock;
 }
 
@@ -21,13 +25,17 @@ int AudioNodeServer::InitializeConnection(std::shared_ptr<CWizReadWriteSocket> s
     if (iRead <= 0) {
         std::cout << "Failed to read socket type" << std::endl;
         if (WSAGetLastError() != 0)
-           std::cerr << "Listen failed: " << GetLastSocketErrorText() << std::endl;
+           std::cerr << "Read socket type: " << GetLastSocketErrorText() << std::endl;
         return -1;
     }
 
     std::lock_guard<std::mutex> lock(clients_mutex_);
 
     if (readBuf[0] == 'c') {
+        if (numClients > 1) {
+            std::cout << "Max number of clients reached. Rejecting..." << std::endl;
+            return 1;
+        }
         sources_.push_back(socket);
         std::cout << "Audio source connected." << std::endl;
     }
@@ -50,11 +58,24 @@ void AudioNodeServer::setSocket(std::shared_ptr<CWizReadWriteSocket> sock)
     socket = sock;
 }
 
-int AudioNodeServer::paCallback(const void* inputBuffer, void* outputBuffer, unsigned long framesPerBuffer, const PaStreamCallbackTimeInfo* timeInfo, PaStreamCallbackFlags statusFlags, void* userData)
+int AudioNodeServer::paCallback(const void* inputBuffer, 
+    void* outputBuffer, 
+    unsigned long framesPerBuffer, 
+    const PaStreamCallbackTimeInfo* timeInfo, 
+    PaStreamCallbackFlags statusFlags, 
+    void* userData)
 {
-    AudioData* audioData = static_cast<AudioData*>(userData);
-    short* out = static_cast<short*>(outputBuffer);
 
+    if (!userData) {
+        std::cerr << "Error: userData is null" << std::endl;
+        return paAbort;
+    }
+    AudioData* audioData = static_cast<AudioData*>(userData);
+    if (!audioData->buffer || !audioData->bufferMutex || !audioData->bufferCv) {
+        std::cerr << "Error: Invalid AudioData structure" << std::endl;
+        return paAbort;
+    }
+    short* out = static_cast<short*>(outputBuffer);
 
     std::unique_lock<std::mutex> lock(*audioData->bufferMutex);
     if (audioData->buffer->empty()) {
@@ -73,12 +94,6 @@ int AudioNodeServer::paCallback(const void* inputBuffer, void* outputBuffer, uns
     }
     return paContinue;
 }
-
-/*
-AudioNodeServer::~AudioNodeServer() {
-
-}
-*/
 
 //This thread method is responsible for reading the incomming socket data from the source
 //and putting it in buffer that is shared with the playback function
@@ -101,15 +116,21 @@ void AudioNodeServer::audioReader(std::vector<char>& buffer,
             buffer.insert(buffer.end(), tempBuffer, tempBuffer + iRead);
             //And finally, notify the waiting playback thread that the buffer is open for reading
             bufferCv.notify_one();
+            socketiter++;
         }
     }
     catch (std::exception& e) {
         std::cout << "Exception in audioReaderThread: " << e.what() << std::endl;
     }
+
+    catch (...) {
+        std::cout << "Unknown exception detected." << std::endl;
+    }
+    
 }
 
 void AudioNodeServer::handleClient() {
-    PaStream* stream;
+    PaStream* stream = nullptr;
     AudioData audioData;
     audioData.buffer = &audioBuffer_;
     audioData.bufferMutex = &bufferMutex_;
@@ -120,7 +141,7 @@ void AudioNodeServer::handleClient() {
         std::cerr << "PortAudio error: " << Pa_GetErrorText(err) << std::endl;
         return;
     }
-
+    
     err = Pa_OpenDefaultStream(&stream,
         0,          // no input channels
         1,          // stereo output
@@ -130,7 +151,7 @@ void AudioNodeServer::handleClient() {
         paCallback, // callback function
         &audioData  // user data
     );
-
+    cout << "Stream is pointing to: " << stream << endl;
     if (err != paNoError) {
         std::cerr << "PortAudio error: " << Pa_GetErrorText(err) << std::endl;
         Pa_Terminate();
@@ -155,10 +176,13 @@ void AudioNodeServer::handleClient() {
                             std::ref(bufferCv_));
     readerThread.join();
     // This will make sure the stream runs until the end of the buffer.
+    /*
     while (true) {
         std::this_thread::sleep_for(std::chrono::milliseconds(100));
     }
+    */
     std::cout << "Done playing. Exiting... " << std::endl;
+    cout << "Stream is pointing to: " << stream << endl;
     Pa_StopStream(stream);
     Pa_CloseStream(stream);
     Pa_Terminate();

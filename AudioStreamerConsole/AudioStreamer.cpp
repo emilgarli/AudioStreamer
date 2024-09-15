@@ -39,7 +39,9 @@ static int playCallback(const void* inputBuffer, void* outputBuffer,
     audioData->framesLeft -= framesRead;
 
     // Send the exact audio data being played over the socket
-    cSocket->Write(out, framesRead * audioData->sfinfo.channels * sizeof(short));
+    if (cSocket->Write(out, framesRead * audioData->sfinfo.channels * sizeof(short)) < 0) {
+        Pa_StopStream();
+    }
     // If less data was read than requested, zero out the remaining part of the output buffer
     if (framesRead < framesPerBuffer) {
         memset(out + framesRead * audioData->sfinfo.channels, 0,
@@ -156,9 +158,11 @@ int main() {
         filePath = "C:\\Users\\Emil\\Music\\AnnaBlanton_Waves_Full\\AnnaBlanton_Waves_Full\\06_AcousticGtrDI.wav";
         std::cout << "No path entered. Using default path." << std::endl;
     }
-    if (!startPlayback(filePath.c_str())) {
-        return -1;
+    while (true) {
+        std::thread playbackThread(&startPlayback, filePath.c_str());
+        playbackThread.join();
     }
+    
     std::cout << "Finished playing.\n";
     Sleep(10000);
     return 0;

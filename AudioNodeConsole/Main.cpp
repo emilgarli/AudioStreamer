@@ -33,10 +33,15 @@ void doListenThread() {
 			continue;
 		}
 		auto socket = std::make_shared<CWizReadWriteSocket>();
+
+		if (WSAGetLastError() != 0) {
+			std::cerr << "Listen failed: " << GetLastSocketErrorText() << std::endl;
+			continue;
+		}
+
 		socket->SetSocket(sock);
 		AudioNodeServer* server = new AudioNodeServer(socket);
-		if (WSAGetLastError() != 0)
-			std::cerr << "Listen failed: " << GetLastSocketErrorText() << std::endl;
+		
 		std::cout << "Incomming connection accepted! Starting coms thread" << std::endl;
 		std::thread comThread(&AudioNodeServer::InitializeConnection, server, socket);
 		comThread.detach();
@@ -45,7 +50,6 @@ void doListenThread() {
 
 int main() {
 	std::cout << "Starting server..." << std::endl;
-	doListenThread();
 	std::thread listenThread = std::thread{ doListenThread };
 	listenThread.join();
 	return 0;
