@@ -11,22 +11,9 @@ D:\Source\repos\AudioSystem\AudioNodeConsole\Rawsocket.h(33,9): warning C4005: '
 D:\Source\repos\AudioSystem\AudioNodeConsole\Rawsocket.h(34,9): warning C4005: 'WSAEINPROGRESS': macro redefinition
 D:\Source\repos\AudioSystem\AudioNodeConsole\Rawsocket.h(35,9): warning C4005: 'WSAEALREADY': macro redefinition
 D:\Source\repos\AudioSystem\AudioNodeConsole\Rawsocket.h(36,9): warning C4005: 'WSAENOTSOCK': macro redefinition
-  Main.cpp
-D:\Source\repos\AudioSystem\AudioNodeConsole\Rawsocket.h(18,9): warning C4005: 'INVALID_SOCKET': macro redefinition
-D:\Source\repos\AudioSystem\AudioNodeConsole\Rawsocket.h(19,9): warning C4005: 'SOCKET_ERROR': macro redefinition
-D:\Source\repos\AudioSystem\AudioNodeConsole\Rawsocket.h(27,9): warning C4005: 'WSAEINTR': macro redefinition
-D:\Source\repos\AudioSystem\AudioNodeConsole\Rawsocket.h(28,9): warning C4005: 'WSAEBADF': macro redefinition
-D:\Source\repos\AudioSystem\AudioNodeConsole\Rawsocket.h(29,9): warning C4005: 'WSAEACCES': macro redefinition
-D:\Source\repos\AudioSystem\AudioNodeConsole\Rawsocket.h(30,9): warning C4005: 'WSAEFAULT': macro redefinition
-D:\Source\repos\AudioSystem\AudioNodeConsole\Rawsocket.h(31,9): warning C4005: 'WSAEINVAL': macro redefinition
-D:\Source\repos\AudioSystem\AudioNodeConsole\Rawsocket.h(32,9): warning C4005: 'WSAEMFILE': macro redefinition
-D:\Source\repos\AudioSystem\AudioNodeConsole\Rawsocket.h(33,9): warning C4005: 'WSAEWOULDBLOCK': macro redefinition
-D:\Source\repos\AudioSystem\AudioNodeConsole\Rawsocket.h(34,9): warning C4005: 'WSAEINPROGRESS': macro redefinition
-D:\Source\repos\AudioSystem\AudioNodeConsole\Rawsocket.h(35,9): warning C4005: 'WSAEALREADY': macro redefinition
-D:\Source\repos\AudioSystem\AudioNodeConsole\Rawsocket.h(36,9): warning C4005: 'WSAENOTSOCK': macro redefinition
   Generating code
-  6 of 534 functions ( 1.1%) were compiled, the rest were copied from previous compilation.
+  15 of 534 functions ( 2.8%) were compiled, the rest were copied from previous compilation.
     0 functions were new in current compilation
-    0 functions had inline decision re-evaluated but remain unchanged
+    9 functions had inline decision re-evaluated but remain unchanged
   Finished generating code
   AudioNodeConsole.vcxproj -> D:\Source\repos\AudioSystem\x64\Release\AudioNodeConsole.exe

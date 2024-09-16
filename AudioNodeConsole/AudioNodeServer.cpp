@@ -65,7 +65,6 @@ int AudioNodeServer::paCallback(const void* inputBuffer,
     PaStreamCallbackFlags statusFlags, 
     void* userData)
 {
-
     if (!userData) {
         std::cerr << "Error: userData is null" << std::endl;
         return paAbort;
@@ -76,21 +75,19 @@ int AudioNodeServer::paCallback(const void* inputBuffer,
         return paAbort;
     }
     short* out = static_cast<short*>(outputBuffer);
-
     std::unique_lock<std::mutex> lock(*audioData->bufferMutex);
     if (audioData->buffer->empty()) {
-        std::fill(out, out + framesPerBuffer * 2, 0); // Fill with silence if no data
+        std::fill(out, out + framesPerBuffer, 0); // Fill with silence if no data
         audioData->bufferCv->wait(lock); // Wait for new data
     }
-
     if (!audioData->buffer->empty()) {
-        size_t bytesToCopy = min(audioData->buffer->size(), framesPerBuffer * 2 * sizeof(short));
+        size_t bytesToCopy = min(audioData->buffer->size(), framesPerBuffer * sizeof(short));
         std::copy(audioData->buffer->begin(), audioData->buffer->begin() + bytesToCopy, reinterpret_cast<char*>(out));
         audioData->buffer->erase(audioData->buffer->begin(), audioData->buffer->begin() + bytesToCopy);
-
-        if (bytesToCopy < framesPerBuffer * 2 * sizeof(short)) {
+        /*
+        if (bytesToCopy < framesPerBuffer * sizeof(short)) {
             std::fill(out + bytesToCopy / sizeof(short), out + framesPerBuffer * 2, 0); // Fill remaining with silence
-        }
+        }*/
     }
     return paContinue;
 }
@@ -147,7 +144,7 @@ void AudioNodeServer::handleClient() {
         1,          // stereo output
         paInt16,    // 16-bit integer output
         44100,      // sample rate
-        2048,       // frames per buffer
+        paFramesPerBufferUnspecified,       // frames per buffer
         paCallback, // callback function
         &audioData  // user data
     );
