@@ -6,5 +6,4 @@ The server is supposed to be able to receive several audio files of instruments 
 
 # Dependencies
 
-Boost
 PortAudio
